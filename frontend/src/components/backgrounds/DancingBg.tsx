@@ -15,11 +15,6 @@ const DancingBackground: React.FC<{ scrollY: number }> = ({ scrollY }) => {
     window.addEventListener('resize', resize);
 
     // Dancer silhouette keyframes (simplified stick figure positions)
-    const dancerPoses = [
-      [{ x: 0, y: -60 }, { x: 0, y: 0 }, { x: -20, y: 30 }, { x: 20, y: 30 }, { x: -15, y: 60 }, { x: 15, y: 60 }],
-      [{ x: 0, y: -60 }, { x: 0, y: 0 }, { x: -30, y: 20 }, { x: 30, y: -10 }, { x: -20, y: 60 }, { x: 10, y: 40 }],
-      [{ x: 0, y: -60 }, { x: 0, y: 0 }, { x: -25, y: 10 }, { x: 35, y: 15 }, { x: -25, y: 55 }, { x: 20, y: 55 }],
-    ];
 
     const ribbons = Array.from({ length: 12 }, (_, i) => ({
       angle: (i / 12) * Math.PI * 2,
@@ -119,7 +114,6 @@ const DancingBackground: React.FC<{ scrollY: number }> = ({ scrollY }) => {
       }
 
       // Aurora waves (scroll-reactive)
-      const auroraHeight = 200 + scrollY * 0.2;
       for (let layer = 0; layer < 3; layer++) {
         ctx.beginPath();
         ctx.moveTo(0, canvas.height * 0.3 + layer * 40);

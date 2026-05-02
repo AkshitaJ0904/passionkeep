@@ -15,7 +15,7 @@ interface Props {
 }
 
 const SessionForm: React.FC<Props> = ({ onClose }) => {
-  const { createSession, getAIInsight, user } = useStore();
+  const { createSession, getAIInsight } = useStore();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [duration, setDuration] = useState(60);

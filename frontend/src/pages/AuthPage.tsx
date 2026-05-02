@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '../store';
@@ -25,117 +25,88 @@ const AuthPage: React.FC = () => {
 
   useEffect(() => {
     if (user) navigate('/dashboard');
-  }, [user]);
+  }, [user, navigate]);
+
+  const handleClearError = useCallback(() => {
+    clearError();
+  }, [clearError]);
 
   useEffect(() => {
-    clearError();
-  }, [mode]);
+    handleClearError();
+  }, [mode, handleClearError]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await login(email, password);
-    } catch { }
+    try { await login(email, password); } catch { }
   };
 
   const handleRegister = async () => {
     if (!selectedPassion) return;
-    try {
-      await register(name, email, password, selectedPassion);
-    } catch { }
+    try { await register(name, email, password, selectedPassion); } catch { }
   };
 
-  const previewPassion = hoveredPassion || selectedPassion;
+  const handleNextStep = () => {
+    if (name.trim() && email.trim() && password.length >= 6) {
+      setStep(2);
+    }
+  };
+
+  const previewPassion = hoveredPassion || selectedPassion || 'photography';
 
   return (
     <div
-      data-passion={previewPassion || 'photography'}
-      style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}
+      data-passion={previewPassion}
+      style={{
+        minHeight: '100vh', display: 'flex', alignItems: 'center',
+        justifyContent: 'center', position: 'relative', overflow: 'hidden',
+        background: 'var(--passion-primary)', transition: 'background 0.8s ease'
+      }}
     >
-      {/* Animated background gradient */}
       <div style={{
         position: 'fixed', inset: 0,
-        background: `radial-gradient(ellipse at 20% 20%, var(--passion-glow, rgba(0,212,255,0.15)) 0%, transparent 60%),
-                     radial-gradient(ellipse at 80% 80%, var(--passion-glow, rgba(0,212,255,0.1)) 0%, transparent 60%),
+        background: `radial-gradient(ellipse at 20% 20%, var(--passion-glow) 0%, transparent 60%),
+                     radial-gradient(ellipse at 80% 80%, var(--passion-glow) 0%, transparent 60%),
                      var(--passion-primary)`,
-        transition: 'all 1s ease',
-        zIndex: 0
+        transition: 'all 1s ease', zIndex: 0
       }} />
 
-      {/* Floating particles */}
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, overflow: 'hidden' }}>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, overflow: 'hidden', pointerEvents: 'none' }}>
         {Array.from({ length: 20 }).map((_, i) => (
           <motion.div
             key={i}
             style={{
-              position: 'absolute',
-              width: 4 + Math.random() * 8,
-              height: 4 + Math.random() * 8,
-              borderRadius: '50%',
-              background: 'var(--passion-accent)',
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              opacity: 0.2
+              position: 'absolute', width: 4 + (i % 3) * 4, height: 4 + (i % 3) * 4,
+              borderRadius: '50%', background: 'var(--passion-accent)',
+              left: `${(i * 5.2) % 100}%`, top: `${(i * 7.3) % 100}%`, opacity: 0.15
             }}
-            animate={{
-              y: [0, -30 - Math.random() * 50, 0],
-              opacity: [0.1, 0.4, 0.1],
-              scale: [1, 1.5, 1]
-            }}
-            transition={{
-              duration: 3 + Math.random() * 4,
-              repeat: Infinity,
-              delay: Math.random() * 3,
-              ease: 'easeInOut'
-            }}
+            animate={{ y: [0, -30 - (i % 3) * 20, 0], opacity: [0.1, 0.4, 0.1], scale: [1, 1.5, 1] }}
+            transition={{ duration: 3 + (i % 4), repeat: Infinity, delay: (i % 5) * 0.6, ease: 'easeInOut' }}
           />
         ))}
       </div>
 
-      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: 500, padding: '0 20px' }}>
-        {/* Logo */}
-        <motion.div
-          initial={{ opacity: 0, y: -30 }}
-          animate={{ opacity: 1, y: 0 }}
-          style={{ textAlign: 'center', marginBottom: 40 }}
-        >
-          <div style={{
-            fontSize: 48, marginBottom: 8,
-            filter: `drop-shadow(0 0 20px var(--passion-accent))`
-          }}>🌟</div>
+      <div style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: 500, padding: '20px' }}>
+        <motion.div initial={{ opacity: 0, y: -30 }} animate={{ opacity: 1, y: 0 }} style={{ textAlign: 'center', marginBottom: 36 }}>
+          <div style={{ fontSize: 48, marginBottom: 8, filter: 'drop-shadow(0 0 20px var(--passion-accent))' }}>🌟</div>
           <h1 style={{
-            fontFamily: 'var(--font-display)',
-            fontSize: 42, fontWeight: 900,
+            fontFamily: 'var(--font-display)', fontSize: 42, fontWeight: 900,
             background: 'linear-gradient(135deg, var(--passion-accent), var(--passion-text))',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-            marginBottom: 8
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', marginBottom: 8
           }}>PassionKeep</h1>
-          <p style={{ color: 'var(--passion-muted)', fontSize: 14, fontFamily: 'var(--font-body)' }}>
-            Protect the joy of what you love
-          </p>
+          <p style={{ color: 'var(--passion-muted)', fontSize: 14 }}>Protect the joy of what you love</p>
         </motion.div>
 
-        {/* Mode toggle */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          style={{
-            display: 'flex', background: 'var(--passion-card)',
-            borderRadius: 50, padding: 4, marginBottom: 30,
-            border: '1px solid var(--passion-border)'
-          }}
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          style={{ display: 'flex', background: 'var(--passion-card)', borderRadius: 50, padding: 4, marginBottom: 28, border: '1px solid var(--passion-border)' }}
         >
           {(['login', 'register'] as const).map(m => (
-            <button
-              key={m}
-              onClick={() => { setMode(m); setStep(1); }}
+            <button key={m} onClick={() => { setMode(m); setStep(1); }}
               style={{
                 flex: 1, padding: '10px 20px', borderRadius: 50, border: 'none',
                 background: mode === m ? 'var(--passion-accent)' : 'transparent',
                 color: mode === m ? 'var(--passion-primary)' : 'var(--passion-muted)',
-                cursor: 'pointer', fontFamily: 'var(--font-body)', fontWeight: 600,
-                fontSize: 14, transition: 'all 0.3s',
-                textTransform: 'capitalize'
+                cursor: 'pointer', fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 14, transition: 'all 0.3s'
               }}
             >
               {m === 'login' ? 'Sign In' : 'Join Now'}
@@ -145,17 +116,8 @@ const AuthPage: React.FC = () => {
 
         <AnimatePresence mode="wait">
           {mode === 'login' ? (
-            <motion.div
-              key="login"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              className="glass-card"
-              style={{ padding: 36 }}
-            >
-              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, marginBottom: 24, color: 'var(--passion-text)' }}>
-                Welcome back
-              </h2>
+            <motion.div key="login" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="glass-card" style={{ padding: 36 }}>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, marginBottom: 24 }}>Welcome back</h2>
               <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div>
                   <label style={{ fontSize: 13, color: 'var(--passion-muted)', marginBottom: 6, display: 'block' }}>Email</label>
@@ -172,49 +134,49 @@ const AuthPage: React.FC = () => {
                   </motion.p>
                 )}
                 <button className="btn-primary" type="submit" disabled={isLoading} style={{ marginTop: 8 }}>
-                  {isLoading ? '✨ Entering...' : 'Enter Your World'}
+                  {isLoading ? '✨ Signing in...' : 'Enter Your World'}
                 </button>
               </form>
             </motion.div>
           ) : (
-            <motion.div
-              key="register"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="glass-card"
-              style={{ padding: 36 }}
-            >
+            <motion.div key="register" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="glass-card" style={{ padding: 36 }}>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 24 }}>
+                {[1, 2].map(s => (
+                  <div key={s} style={{ flex: 1, height: 3, borderRadius: 2, background: s <= step ? 'var(--passion-accent)' : 'var(--passion-border)', transition: 'background 0.3s' }} />
+                ))}
+              </div>
+
               <AnimatePresence mode="wait">
                 {step === 1 ? (
                   <motion.div key="step1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                    <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, marginBottom: 6 }}>Create your account</h2>
-                    <p style={{ color: 'var(--passion-muted)', fontSize: 13, marginBottom: 24 }}>Step 1 of 2 — Your details</p>
+                    <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, marginBottom: 4 }}>Create your account</h2>
+                    <p style={{ color: 'var(--passion-muted)', fontSize: 13, marginBottom: 22 }}>Step 1 of 2 — Your details</p>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                      <input className="input-field" placeholder="Your name" value={name} onChange={e => setName(e.target.value)} />
-                      <input className="input-field" type="email" placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)} />
-                      <input className="input-field" type="password" placeholder="Create password" value={password} onChange={e => setPassword(e.target.value)} />
-                      <button
-                        className="btn-primary"
-                        onClick={() => {
-                          if (name && email && password.length >= 6) setStep(2);
-                        }}
-                        style={{ opacity: name && email && password.length >= 6 ? 1 : 0.5 }}
-                      >
-                        Next →
+                      <div>
+                        <label style={{ fontSize: 13, color: 'var(--passion-muted)', marginBottom: 6, display: 'block' }}>Your name</label>
+                        <input className="input-field" placeholder="e.g. Akshita" value={name} onChange={e => setName(e.target.value)} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: 13, color: 'var(--passion-muted)', marginBottom: 6, display: 'block' }}>Email address</label>
+                        <input className="input-field" type="email" placeholder="your@email.com" value={email} onChange={e => setEmail(e.target.value)} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: 13, color: 'var(--passion-muted)', marginBottom: 6, display: 'block' }}>Password (min 6 chars)</label>
+                        <input className="input-field" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} />
+                      </div>
+                      {error && <p style={{ color: '#ff6b6b', fontSize: 13, background: 'rgba(255,107,107,0.1)', padding: 10, borderRadius: 8 }}>{error}</p>}
+                      <button className="btn-primary" onClick={handleNextStep} style={{ opacity: name.trim() && email.trim() && password.length >= 6 ? 1 : 0.5, marginTop: 4 }}>
+                        Next → Choose Passion
                       </button>
                     </div>
                   </motion.div>
                 ) : (
                   <motion.div key="step2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                    <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, marginBottom: 6 }}>What's your passion?</h2>
+                    <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, marginBottom: 4 }}>What's your passion?</h2>
                     <p style={{ color: 'var(--passion-muted)', fontSize: 13, marginBottom: 20 }}>Step 2 of 2 — This shapes your entire experience</p>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
                       {PASSIONS.map(p => (
-                        <motion.button
-                          key={p.id}
-                          whileHover={{ scale: 1.03 }}
-                          whileTap={{ scale: 0.97 }}
+                        <motion.button key={p.id} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
                           onClick={() => setSelectedPassion(p.id)}
                           onMouseEnter={() => setHoveredPassion(p.id)}
                           onMouseLeave={() => setHoveredPassion('')}
@@ -227,18 +189,21 @@ const AuthPage: React.FC = () => {
                           }}
                         >
                           <div style={{ fontSize: 24, marginBottom: 4 }}>{p.emoji}</div>
-                          <div style={{ fontWeight: 600, color: selectedPassion === p.id ? p.color : 'var(--passion-text)', fontSize: 13 }}>{p.label}</div>
+                          <div style={{ fontWeight: 600, fontSize: 13, color: selectedPassion === p.id ? p.color : 'var(--passion-text)' }}>{p.label}</div>
                           <div style={{ fontSize: 11, color: 'var(--passion-muted)', marginTop: 2 }}>{p.desc}</div>
                         </motion.button>
                       ))}
                     </div>
-
-                    {error && <p style={{ color: '#ff6b6b', fontSize: 13, marginBottom: 10 }}>{error}</p>}
+                    {error && <p style={{ color: '#ff6b6b', fontSize: 13, background: 'rgba(255,107,107,0.1)', padding: 10, borderRadius: 8, marginBottom: 12 }}>{error}</p>}
                     <div style={{ display: 'flex', gap: 10 }}>
-                      <button className="btn-ghost" onClick={() => setStep(1)} style={{ flex: 0.4 }}>← Back</button>
-                      <button className="btn-primary" onClick={handleRegister} disabled={!selectedPassion || isLoading} style={{ flex: 1, opacity: selectedPassion ? 1 : 0.5 }}>
-                        {isLoading ? '✨ Creating...' : '🚀 Begin Journey'}
-                      </button>
+                      <button className="btn-ghost" onClick={() => setStep(1)} style={{ flex: '0 0 auto', padding: '12px 20px' }}>← Back</button>
+                      <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                        className="btn-primary" onClick={handleRegister}
+                        disabled={!selectedPassion || isLoading}
+                        style={{ flex: 1, opacity: selectedPassion && !isLoading ? 1 : 0.5 }}
+                      >
+                        {isLoading ? '✨ Creating your world...' : '🚀 Begin Journey'}
+                      </motion.button>
                     </div>
                   </motion.div>
                 )}

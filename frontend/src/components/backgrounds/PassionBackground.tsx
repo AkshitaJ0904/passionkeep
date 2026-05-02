@@ -1,17 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import PhotographyBackground from './PhotographyBg';
 import ArtBackground from './ArtBg';
 import DancingBackground from './DancingBg';
 import WritingBackground from './WritingBg';
 import MusicBackground from './MusicBg';
-
-const PASSION_SOUNDS: Record<string, { url: string; label: string }> = {
-  photography: { url: '', label: '📸 City ambience' },
-  art: { url: '', label: '🎨 Soft brush strokes' },
-  dancing: { url: '', label: '💃 Stage energy' },
-  writing: { url: '', label: '✍️ Library whispers' },
-  music: { url: '', label: '🎵 Vinyl hum' }
-};
 
 interface Props {
   passion: string;
@@ -23,23 +15,19 @@ const PassionBackground: React.FC<Props> = ({ passion, scrollY }) => {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const nodesRef = useRef<any[]>([]);
 
-  // Web Audio API ambient sound generation (no external files needed)
-  const createAmbientSound = (passion: string) => {
-    if (!soundEnabled) return;
+  const createAmbientSound = useCallback((p: string) => {
     if (audioCtxRef.current) {
       audioCtxRef.current.close();
     }
-
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
     audioCtxRef.current = ctx;
     const masterGain = ctx.createGain();
     masterGain.gain.value = 0.08;
     masterGain.connect(ctx.destination);
 
-    if (passion === 'music') {
-      // Musical chord progression
-      const notes = [261.63, 329.63, 392, 523.25]; // C major chord
-      notes.forEach((freq, i) => {
+    if (p === 'music') {
+      const notes = [261.63, 329.63, 392, 523.25];
+      notes.forEach((freq) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.frequency.value = freq;
@@ -48,7 +36,6 @@ const PassionBackground: React.FC<Props> = ({ passion, scrollY }) => {
         osc.connect(gain);
         gain.connect(masterGain);
         osc.start();
-        // LFO for vibrato
         const lfo = ctx.createOscillator();
         const lfoGain = ctx.createGain();
         lfo.frequency.value = 0.5;
@@ -58,8 +45,7 @@ const PassionBackground: React.FC<Props> = ({ passion, scrollY }) => {
         lfo.start();
         nodesRef.current.push(osc, lfo);
       });
-    } else if (passion === 'writing') {
-      // Soft fireplace/rain sound via noise
+    } else if (p === 'writing') {
       const bufferSize = 2 * ctx.sampleRate;
       const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
       const data = buffer.getChannelData(0);
@@ -74,8 +60,7 @@ const PassionBackground: React.FC<Props> = ({ passion, scrollY }) => {
       filter.connect(masterGain);
       source.start();
       nodesRef.current.push(source);
-    } else if (passion === 'dancing') {
-      // Rhythmic pulse
+    } else if (p === 'dancing') {
       const kick = () => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -91,7 +76,6 @@ const PassionBackground: React.FC<Props> = ({ passion, scrollY }) => {
       const interval = setInterval(kick, 500);
       nodesRef.current.push({ stop: () => clearInterval(interval) });
     } else {
-      // Generic ambient hum
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.frequency.value = 60;
@@ -102,52 +86,39 @@ const PassionBackground: React.FC<Props> = ({ passion, scrollY }) => {
       osc.start();
       nodesRef.current.push(osc);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (soundEnabled) {
       createAmbientSound(passion);
     }
     return () => {
-      nodesRef.current.forEach(n => { try { n.stop?.(); } catch {} });
+      nodesRef.current.forEach(n => { try { n.stop?.(); } catch { } });
       nodesRef.current = [];
       audioCtxRef.current?.close();
     };
-  }, [soundEnabled, passion]);
+  }, [soundEnabled, passion, createAmbientSound]);
 
-  const BgComponent = {
+  const BgComponent = ({
     photography: PhotographyBackground,
     art: ArtBackground,
     dancing: DancingBackground,
     writing: WritingBackground,
     music: MusicBackground
-  }[passion] || PhotographyBackground;
+  } as Record<string, React.FC<{ scrollY: number }>>)[passion] || PhotographyBackground;
 
   return (
     <>
       <BgComponent scrollY={scrollY} />
-      {/* Sound toggle */}
       <button
         onClick={() => setSoundEnabled(!soundEnabled)}
         style={{
-          position: 'fixed',
-          bottom: 20,
-          right: 20,
-          zIndex: 100,
-          background: 'var(--passion-card)',
-          border: '1px solid var(--passion-border)',
-          borderRadius: '50px',
-          color: 'var(--passion-text)',
-          cursor: 'pointer',
-          padding: '8px 16px',
-          fontSize: '12px',
-          backdropFilter: 'blur(10px)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          transition: 'all 0.3s'
+          position: 'fixed', bottom: 20, right: 20, zIndex: 100,
+          background: 'var(--passion-card)', border: '1px solid var(--passion-border)',
+          borderRadius: '50px', color: 'var(--passion-text)', cursor: 'pointer',
+          padding: '8px 16px', fontSize: '12px', backdropFilter: 'blur(10px)',
+          display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.3s'
         }}
-        title="Toggle ambient sound"
       >
         {soundEnabled ? '🔊' : '🔇'} Ambient Sound
       </button>
